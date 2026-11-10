@@ -95,3 +95,36 @@ def load_data():
     now = datetime.now().strftime("%H:%M:%S")
     status_label.config(text=f"Обновлено в {now}")
 
+
+# --- Окно ---
+root = tk.Tk()
+root.title("Крипто-трекер")
+root.geometry("620x430")
+
+# --- Таблица ---
+tree = ttk.Treeview(root, columns=("name", "symbol", "price"), show="headings", height=12)
+tree.heading("name", text="Название")
+tree.heading("symbol", text="Символ")
+tree.heading("price", text="Цена (USDT)")
+
+tree.column("name", width=180, anchor="w")
+tree.column("symbol", width=110, anchor="center")
+tree.column("price", width=180, anchor="e")
+
+tree.tag_configure("green", foreground="green")
+tree.tag_configure("red", foreground="red")
+tree.tag_configure("black", foreground="black")
+
+tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=(10, 0))
+
+# --- Нижняя панель ---
+bottom = tk.Frame(root)
+bottom.pack(fill=tk.X, padx=10, pady=10)
+
+tk.Button(bottom, text="Обновить сейчас", command=load_data).pack(side=tk.LEFT)
+status_label = tk.Label(bottom, text="Загрузка...")
+status_label.pack(side=tk.RIGHT)
+
+load_data()
+
+root.mainloop()
