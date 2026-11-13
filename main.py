@@ -14,19 +14,25 @@ COINS = [
     ("XRPUSDT", "XRP"),
     ("ADAUSDT", "Cardano"),
     ("DOGEUSDT", "Dogecoin"),
-    ("LTCUSDT", "Litecoin"),
-    ("DOTUSDT", "Polkadot"),
-    ("LINKUSDT", "Chainlink"),
-    ("BCHUSDT", "Bitcoin Cash"),
-    ("ETCUSDT", "Ethereum Classic"),
-    ("XLMUSDT", "Stellar"),
     ("TRXUSDT", "TRON"),
+    ("LINKUSDT", "Chainlink"),
+    ("DOTUSDT", "Polkadot"),
+    ("MATICUSDT", "Polygon"),
+    ("LTCUSDT", "Litecoin"),
+    ("BCHUSDT", "Bitcoin Cash"),
+    ("SHIBUSDT", "Shiba Inu"),
+    ("AVAXUSDT", "Avalanche"),
+    ("XLMUSDT", "Stellar"),
+    ("TONUSDT", "Toncoin"),
+    ("NEARUSDT", "NEAR Protocol"),
     ("ATOMUSDT", "Cosmos"),
-    ("NEOUSDT", "NEO"),
-    ("VETUSDT", "VeChain"),
-    ("FILUSDT", "Filecoin"),
     ("ICPUSDT", "Internet Computer"),
-    ("HBARUSDT", "Hedera")
+    ("HBARUSDT", "Hedera"),
+    ("FILUSDT", "Filecoin"),
+    ("ETCUSDT", "Ethereum Classic"),
+    ("XMRUSDT", "Monero"),
+    ("ZECUSDT", "Zcash"),
+
 ]
 
 # Здесь будем хранить цены с прошлого обновления, чтобы сравнивать
@@ -36,13 +42,15 @@ previous_prices = {}
 def load_data():
     # 1. Запрос к API
     try:
+        # Выполняем GET-запрос с таймаутом 10 секунд,
+        # чтобы приложение не «зависло» при проблемах с сетью
         response = requests.get(URL, timeout=10)
         response.raise_for_status()
     except requests.exceptions.RequestException:
         status_label.config(text="Ошибка сети. Проверьте интернет.")
         return
 
-    # 2. Превращаем ответ в JSON или если пришел "сломанный" — выдаем ошибку
+    # 2. Превращаем ответ в JSON или если пришел "сломанный" ответ — выдаем ошибку
     try:
         data = response.json()
     except ValueError:
@@ -78,12 +86,14 @@ def load_data():
             tag = "black"  # первый запуск — сравнивать не с чем
 
         # форматируем цену
+        # .6f и .2f - сколько знаков после запятой будет
         if price < 1:
             price_text = f"${price:.6f}"
         else:
             price_text = f"${price:,.2f}"
 
-        tree.insert("", tk.END, values=(name, symbol, price_text), tags=(tag,))
+        short_symbol = symbol.replace("USDT", "")
+        tree.insert("", tk.END, values=(name, short_symbol, price_text), tags=(tag,))
 
     # 6. Запоминаем цены для следующего обновления
     previous_prices.clear()
@@ -91,21 +101,21 @@ def load_data():
         if symbol in prices:
             previous_prices[symbol] = prices[symbol]
 
-    # Обновляем надпись со временем
+    # 7. Обновляем надпись со временем
     now = datetime.now().strftime("%H:%M:%S")
     status_label.config(text=f"Обновлено в {now}")
 
 
-# --- Окно ---
+#  Окно
 root = tk.Tk()
-root.title("Крипто-трекер")
-root.geometry("620x430")
+root.title("Курсы криптоваляют к доллару(USD)")
+root.geometry("600x500")
 
-# --- Таблица ---
-tree = ttk.Treeview(root, columns=("name", "symbol", "price"), show="headings", height=12)
+# Таблица
+tree = ttk.Treeview(root, columns=("name", "symbol", "price"), show="headings", height=20)
 tree.heading("name", text="Название")
-tree.heading("symbol", text="Символ")
-tree.heading("price", text="Цена (USDT)")
+tree.heading("symbol", text="Сокращение")
+tree.heading("price", text="Цена USD")
 
 tree.column("name", width=180, anchor="w")
 tree.column("symbol", width=110, anchor="center")
@@ -117,12 +127,12 @@ tree.tag_configure("black", foreground="black")
 
 tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=(10, 0))
 
-# --- Нижняя панель ---
+# Нижняя панель
 bottom = tk.Frame(root)
 bottom.pack(fill=tk.X, padx=10, pady=10)
 
-tk.Button(bottom, text="Обновить сейчас", command=load_data).pack(side=tk.LEFT)
-status_label = tk.Label(bottom, text="Загрузка...")
+tk.Button(bottom, text="Обновить", command=load_data).pack(side=tk.LEFT)
+status_label = tk.Label(bottom)
 status_label.pack(side=tk.RIGHT)
 
 load_data()
